@@ -94,16 +94,16 @@ function Animator.ConvertKSToTable(kf)
 	if not kf:IsA("KeyframeSequence") then
 		return {}
 	end
-	
+
 	local res = {}
 	local children = kf:GetChildren();
 	local current = 0
 	table.sort(children, function(a, b) return a.Time < b.Time end)
-	
+
 	for index, keyframe in pairs(children) do
 		if keyframe:IsA("Keyframe") then
 			current = keyframe.Time
-			
+
 			res[current]={}
 			local timestamp = res[current]
 
@@ -115,7 +115,7 @@ function Animator.ConvertKSToTable(kf)
 
 		end
 	end
-	
+
 	return res
 end
 
@@ -185,41 +185,41 @@ end
 
 function Animator.new(Model, Data)
 	warn("Animator.new : Created a new animation for ".. Model.Name .. " with the data of: ".. tostring(Data))
-	
+
 	local Result = {}
 	local Speed = 1
 	local IsLooping = false
 	local IsFinished = false
 	local CurrentPlayingId = Http:GenerateGUID()
-	
+
 	local DefaultC0 = {}
 	local Welds = {}
-	
+
 	if Saves[Model] == nil then
 		Saves[Model] = {}
 	end
-	
+
 	table.insert(Saves[Model], Result)
 	for Index, Child in pairs(Model:GetDescendants()) do
 		if Child:IsA(Animator.JointCheck) then
 			DefaultC0[Child.Part1.Name] = Child.C0
 		end
 	end
-	
+
 	for i,v in pairs(Model:GetDescendants()) do
 		if v:IsA(Animator.JointCheck) then
 			table.insert(Welds, v)
 		end
 	end
-	
+
 	function Result:SetFinished(bool)
 		IsFinished = bool
 	end
-	
+
 	function Result:IsPlaying()
 		return not IsFinished
 	end
-	
+
 	function Result:SetLoop(bool)
 		bool = bool or false
 		if type(bool) ~= "boolean" then
@@ -228,13 +228,13 @@ function Animator.new(Model, Data)
 			IsLooping = bool
 		end
 	end
-	
+
 	function Result:Stop()
 		local MainCPI = Http:GenerateGUID()
 		CurrentPlayingId = MainCPI
 		Animator.RestoreJoints(Model, DefaultC0)
 	end
-	
+
 	function Result:StopAllPlayingAnimations()
 		if Saves[Model] ~= nil then
 			for Index, AnimHandler in pairs(Saves[Model]) do
@@ -243,29 +243,29 @@ function Animator.new(Model, Data)
 			end
 		end
 	end
-	
+
 	function Result:Play()
 		IsFinished = false
-		
+
 		local MainCPI = Http:GenerateGUID()
 		CurrentPlayingId = MainCPI
-		
+
 		local Index = 0
-		
+
 		for Timestamp, Keyframes in pairs(Data) do
-			
+
 			if CurrentPlayingId ~= MainCPI then
 				return
 			end
-			
+
 			coroutine.wrap(function()
 				wait(Timestamp/Speed)
 				Index += 1
-				
+
 				if CurrentPlayingId ~= MainCPI then
 					return
 				end
-				
+
 				for JointName, JointCF in pairs(Keyframes) do
 					for Char_Index, Char_C in pairs(Welds) do
 						if Char_C:IsA(Animator.JointCheck) then
@@ -274,7 +274,7 @@ function Animator.new(Model, Data)
 								if CurrentPlayingId ~= MainCPI then
 									return
 								end
-								game:GetService("TweenService"):Create(Char_C, TweenInfo.new(.3), {
+								game:GetService("TweenService"):Create(Char_C, TweenInfo.new(.3/Speed), {
 									C0 = DefaultC0[Char_C.Part1.Name] * JointCF
 								}):Play()
 							else
@@ -282,8 +282,8 @@ function Animator.new(Model, Data)
 						end
 					end
 				end
-				
-				
+
+
 
 				local DataSize = 0
 
@@ -297,15 +297,15 @@ function Animator.new(Model, Data)
 					if IsLooping == false then
 						Result:Stop()
 					end
-					
+
 				end
 			end)()
-			
+
 		end
-		
+
 	end
-	
-	
+
+
 	function Result:SetSpeed(int)  -- Blank for default.
 		int = int or 1
 		if tonumber(int) == nil then
@@ -314,7 +314,7 @@ function Animator.new(Model, Data)
 			Speed = int
 		end
 	end
-	
+
 	coroutine.wrap(function()
 		while true do
 			if IsLooping == true then
@@ -325,9 +325,9 @@ function Animator.new(Model, Data)
 			wait()
 		end
 	end)()
-	
+
 	return Result
 end
-	
-	
+
+
 return Animator
