@@ -216,7 +216,7 @@ function Animator.new(Model, Data)
 	function Result:Stop()
 		local MainCPI = Http:GenerateGUID()
 		CurrentPlayingId = MainCPI
-		
+		IsFinished = true
 		Animator.RestoreJoints(Model, DefaultC0)
 	end
 
