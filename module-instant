@@ -65,7 +65,7 @@ Animator.RestoreJoint([Your Character], [DefaultC0 Table])
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 + Getting KeyframeSequence Data from AnimationIDs:
-local animation = getKeyframeSequenceDataFromAnimationId("rbxassetid://00000000")
+local animation = mod.getKeyframeSequenceDataFromAnimationId("rbxassetid://00000000")
 - It will return a blank table if something went wrong.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
