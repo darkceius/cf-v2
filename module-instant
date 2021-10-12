@@ -25,7 +25,7 @@ local kfData = mod.ConvertKeyframeSequence(keyframe)
 warn(kfData) -- !! check your output !! !! this won't return a table, it will return a string !!
 
 - Second way:
-https://www.roblox.com/library/7717812192/CFAv2
+[Soon]
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -61,6 +61,12 @@ animation:SetSpeed(int)
 - The C0s will automatically reset to default, when the animation has stopped (not looping) or when you call a specific function with the default c0.
 
 Animator.RestoreJoint([Your Character], [DefaultC0 Table])
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Getting KeyframeSequence Data from AnimationIDs:
+local animation = getKeyframeSequenceDataFromAnimationId("rbxassetid://00000000")
+- It will return a blank table if something went wrong.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -136,6 +142,27 @@ function Animator.ConvertKeyframeSequence(kf)
 	return res
 end
 
+function Animator.getKeyframeSequenceDataFromAnimationId(id)
+	local KeyframeSequence = game:GetService("KeyframeSequenceProvider") 
+	local Inst = nil
+	local Result = {}
+
+	pcall(function()
+		local R = KeyframeSequence:GetKeyframeSequenceAsync(id)
+		if R ~= nil then
+			Inst = R
+		end
+	end)
+	if Inst ~= nil then
+		pcall(function()
+			local Data = Animator.ConvertKSToTable(Inst)
+			if Data then
+				Result = Data
+			end
+		end)
+	end
+	return Result
+end
 
 function Animator.RestoreJoints(Model, J)
 	for Index, Child in pairs(Model:GetDescendants()) do
