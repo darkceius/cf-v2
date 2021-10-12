@@ -65,7 +65,7 @@ Animator.RestoreJoint([Your Character], [DefaultC0 Table])
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 + Getting KeyframeSequence Data from AnimationIDs:
-local animation = mod.getKeyframeSequenceDataFromAnimationId("rbxassetid://00000000")
+local animation = getKeyframeSequenceDataFromAnimationId("rbxassetid://00000000")
 - It will return a blank table if something went wrong.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -192,6 +192,14 @@ function Animator.new(Model, Data)
 		end
 	end
 	
+	local Welds = {}
+	
+	for i,v in pairs(Model:GetDescendants()) do
+		if v:IsA(Animator.JointCheck) then
+			table.insert(Welds, v)
+		end
+	end
+	
 	function Result:IsPlaying()
 		return not IsFinished
 	end
@@ -235,7 +243,7 @@ function Animator.new(Model, Data)
 				end
 				
 				for JointName, JointCF in pairs(Keyframes) do
-					for Char_Index, Char_C in pairs(Model:GetDescendants()) do
+					for Char_Index, Char_C in pairs(Welds) do
 						if Char_C:IsA(Animator.JointCheck) then
 
 							if (Char_C.Part1.Name == JointName) and (DefaultC0[Char_C.Part1.Name] ~= nil) then
