@@ -52,8 +52,15 @@ animation:Stop()
 - Looping the animation:
 animation:SetLoop(boolean)
 
-- Speeding the animation [Soon]:
+- Setting the animation speed:
 animation:SetSpeed(int)
+
+- Checking if the animation is still playing:
+animation:IsPlaying()
++ Returns a boolean.
+
+- Stopping all animations running on a dummy:
+animation:StopAllPlayingAnimations()
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -82,6 +89,7 @@ local Animator = {
 }
 
 local Http = game:GetService("HttpService")
+local Saves = {}
 
 function Animator.ConvertKSToTable(kf)
 	if not kf:IsA("KeyframeSequence") then
@@ -186,13 +194,18 @@ function Animator.new(Model, Data)
 	local CurrentPlayingId = Http:GenerateGUID()
 	
 	local DefaultC0 = {}
+	local Welds = {}
+	
+	if Saves[Model] == nil then
+		Saves[Model] = {}
+	end
+	
+	table.insert(Saves[Model], Result)
 	for Index, Child in pairs(Model:GetDescendants()) do
 		if Child:IsA(Animator.JointCheck) then
 			DefaultC0[Child.Part1.Name] = Child.C0
 		end
 	end
-	
-	local Welds = {}
 	
 	for i,v in pairs(Model:GetDescendants()) do
 		if v:IsA(Animator.JointCheck) then
@@ -218,7 +231,15 @@ function Animator.new(Model, Data)
 		CurrentPlayingId = MainCPI
 		Animator.RestoreJoints(Model, DefaultC0)
 	end
-
+	
+	function Result:StopAllPlayingAnimations()
+		if Saves[Model] ~= nil then
+			for Index, AnimHandler in pairs(Saves[Model]) do
+				AnimHandler:Stop()
+			end
+		end
+	end
+	
 	function Result:Play()
 		IsFinished = false
 		
@@ -234,7 +255,7 @@ function Animator.new(Model, Data)
 			end
 			
 			coroutine.wrap(function()
-				wait(Timestamp)
+				wait(Timestamp/Speed)
 				Index += 1
 				
 				if CurrentPlayingId ~= MainCPI then
