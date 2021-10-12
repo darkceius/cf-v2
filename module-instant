@@ -1,0 +1,276 @@
+--[[
+[CFrame Animator Module v2]
+written by Darkceius
+
+Version: Instant (Time soon)
+
+-------------------------------------------
+---------------------------------
+Documentation:
+(Best results with animations that have keyframes every millisecond)
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Requiring the module:
+local mod = require([where your module is located])
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Getting KeyframeSequence Data {V1}:
+You can do this in 2 ways: Doing it yourself, or using my plugin
+
+- First way:
+local keyframe = [where your keyframesequence is located]
+local kfData = mod.ConvertKeyframeSequence(keyframe)
+warn(kfData) -- !! check your output !! !! this won't return a table, it will return a string !!
+
+- Second way:
+[Soon]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Getting KeyframeSequence Data {V2}:
+local keyframe = [where your keyframesequence is located]
+local kfData = mod.ConvertKSToTable(keyframe)
+
+Note: kfData is a table object.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Playing animations:
+- Loading the animation:
+local animation = Animator.new([Your Character], [KeyframeSequenceData], [DefaultC0]) -- [DefaultC0: soon] 
+
+Note: Disable any playing animation before loading a new animation. If any animation is playing, the defaultc0 will change.
+
+- Playing the animation:
+animation:Play()
+
+- Stopping the animation:
+animation:Stop()
+
+- Looping the animation:
+animation:SetLoop(boolean)
+
+- Speeding the animation [Soon]:
+animation:SetSpeed(int)
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
++ Restoring C0s:
+- The C0s will automatically reset to default, when the animation has stopped (not looping) or when you call a specific function with the default c0.
+
+Animator.RestoreJoint([Your Character], [DefaultC0 Table])
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+TODO:
+ - Create plugin for module (Convert keyframesequence, download module [instant, time])
+ - Create time version
+ - Create Animator.getDefaultC0("r6/r15")
+ - Github docs, github source for module (plugin)
+---------------------------------
+-------------------------------------------
+]]--
+
+local Animator = {
+	['JointCheck'] = "Motor6D"
+}
+
+local Http = game:GetService("HttpService")
+
+function Animator.ConvertKSToTable(kf)
+	if not kf:IsA("KeyframeSequence") then
+		return {}
+	end
+	
+	local res = {}
+	local children = kf:GetChildren();
+	local current = 0
+	table.sort(children, function(a, b) return a.Time < b.Time end)
+	
+	for index, keyframe in pairs(children) do
+		if keyframe:IsA("Keyframe") then
+			current = keyframe.Time
+			
+			res[current]={}
+			local timestamp = res[current]
+
+			for i,v in pairs(keyframe:GetDescendants()) do
+				if v:IsA("Pose") then
+					timestamp[v.Name]=v.CFrame
+				end
+			end
+
+		end
+	end
+	
+	return res
+end
+
+function Animator.ConvertKeyframeSequence(kf)
+	if not kf:IsA("KeyframeSequence") then
+		return "{} -- didnt select a keyframe sequence"
+	end
+	local res = "{"
+	local current = 0
+	local children = kf:GetChildren();
+	table.sort(children, function(a, b) return a.Time < b.Time end)
+
+	for index, keyframe in pairs(children) do
+		if keyframe:IsA("Keyframe") then
+			current = keyframe.Time
+
+			res = res .. "\n[".. tostring(current) .. "]={"
+
+			for i,v in pairs(keyframe:GetDescendants()) do
+				if v:IsA("Pose") then
+					res = res .. '["'.. v.Name .. '"] = CFrame.new('.. tostring(v.CFrame) .. '),\n'
+				end
+			end
+
+			res = res .. "},"
+		end
+	end
+
+	res = res .. "}"
+
+	return res
+end
+
+
+function Animator.RestoreJoints(Model, J)
+	for Index, Child in pairs(Model:GetDescendants()) do
+		if Child:IsA(Animator.JointCheck) then
+			if J[Child.Part1.Name] ~= nil then
+				game:GetService("TweenService"):Create(Child, TweenInfo.new(.2), {
+					C0 = J[Child.Part1.Name]
+				}):Play()
+			end
+		end
+	end
+end
+
+function Animator.new(Model, Data)
+	warn("Animator.new : Created a new animation for ".. Model.Name .. " with the data of: ".. tostring(Data))
+	
+	local Result = {}
+	local Speed = 1
+	local IsLooping = false
+	local IsFinished = false
+	local CurrentPlayingId = Http:GenerateGUID()
+	
+	local DefaultC0 = {}
+	for Index, Child in pairs(Model:GetDescendants()) do
+		if Child:IsA(Animator.JointCheck) then
+			DefaultC0[Child.Part1.Name] = Child.C0
+		end
+	end
+	
+	function Result:IsPlaying()
+		return not IsFinished
+	end
+	
+	function Result:SetLoop(bool)
+		bool = bool or false
+		if type(bool) ~= "boolean" then
+			warn("Animator.new : SetLoop was called with a ".. type(bool) .. " not boolean.")
+		else
+			IsLooping = bool
+		end
+	end
+	
+	function Result:Stop()
+		local MainCPI = Http:GenerateGUID()
+		CurrentPlayingId = MainCPI
+		
+		Animator.RestoreJoints(Model, DefaultC0)
+	end
+
+	function Result:Play()
+		IsFinished = false
+		
+		local MainCPI = Http:GenerateGUID()
+		CurrentPlayingId = MainCPI
+		
+		local Index = 0
+		
+		for Timestamp, Keyframes in pairs(Data) do
+			
+			if CurrentPlayingId ~= MainCPI then
+				return
+			end
+			
+			coroutine.wrap(function()
+				wait(Timestamp)
+				Index += 1
+				
+				if CurrentPlayingId ~= MainCPI then
+					return
+				end
+				
+				for JointName, JointCF in pairs(Keyframes) do
+					for Char_Index, Char_C in pairs(Model:GetDescendants()) do
+						if Char_C:IsA(Animator.JointCheck) then
+
+							if (Char_C.Part1.Name == JointName) and (DefaultC0[Char_C.Part1.Name] ~= nil) then
+								if CurrentPlayingId ~= MainCPI then
+									return
+								end
+								game:GetService("TweenService"):Create(Char_C, TweenInfo.new(.3), {
+									C0 = DefaultC0[Char_C.Part1.Name] * JointCF
+								}):Play()
+							else
+							end
+						end
+					end
+				end
+				
+				
+
+				local DataSize = 0
+
+				for i,v in pairs(Data) do
+					DataSize += 1
+				end
+
+				wait(.1)
+				if Index == DataSize then
+					IsFinished = true
+					if IsLooping == false then
+						Result:Stop()
+					end
+					
+				end
+			end)()
+			
+		end
+		
+	end
+	
+	
+	function Result:SetSpeed(int)  -- Blank for default.
+		int = int or 1
+		if tonumber(int) == nil then
+			warn("Animator.new : SetSpeed was called with a ".. type(int) .. " not number.")
+		else
+			Speed = int
+		end
+	end
+	
+	coroutine.wrap(function()
+		while true do
+			if IsLooping == true then
+				if IsFinished == true then
+					Result:Play()
+				end
+			end
+			wait()
+		end
+	end)()
+	
+	return Result
+end
+	
+	
+return Animator
