@@ -213,6 +213,10 @@ function Animator.new(Model, Data)
 		end
 	end
 	
+	function Result:SetFinished(bool)
+		IsFinished = bool
+	end
+	
 	function Result:IsPlaying()
 		return not IsFinished
 	end
@@ -236,6 +240,7 @@ function Animator.new(Model, Data)
 		if Saves[Model] ~= nil then
 			for Index, AnimHandler in pairs(Saves[Model]) do
 				AnimHandler:Stop()
+				AnimHandler:SetFinished(false)
 			end
 		end
 	end
