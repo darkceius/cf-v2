@@ -25,8 +25,7 @@ local kfData = mod.ConvertKeyframeSequence(keyframe)
 warn(kfData) -- !! check your output !! !! this won't return a table, it will return a string !!
 
 - Second way:
-[Soon]
-
+https://www.roblox.com/library/7717812192/CFAv2
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 + Getting KeyframeSequence Data {V2}:
