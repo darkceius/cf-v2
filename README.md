@@ -12,6 +12,4 @@ You can find the source code of the modules here.
 - https://www.roblox.com/library/7717812192/CFAv2
 
 ------------
-More documentation inside the module
-
-
+Find more documentation inside the module. 
