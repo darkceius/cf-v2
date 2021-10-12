@@ -65,10 +65,8 @@ Animator.RestoreJoint([Your Character], [DefaultC0 Table])
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 TODO:
- - Create plugin for module (Convert keyframesequence, download module [instant, time])
  - Create time version
  - Create Animator.getDefaultC0("r6/r15")
- - Github docs, github source for module (plugin)
 ---------------------------------
 -------------------------------------------
 ]]--
